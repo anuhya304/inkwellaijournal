@@ -10,6 +10,7 @@ import InsightsDashboard from "@/components/InsightsDashboard";
 import MoodCalendar from "@/components/MoodCalendar";
 import InkSplatter from "@/components/InkSplatter";
 import BackgroundElements from "@/components/BackgroundElements";
+import WritingPrompt from "@/components/WritingPrompt";
 import { getEntry, saveEntry } from "@/lib/journal-store";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
@@ -217,6 +218,9 @@ const Index = () => {
                 </motion.div>
               )}
             </AnimatePresence>
+            <div className="mt-3">
+              <WritingPrompt />
+            </div>
           </div>
         </div>
 
