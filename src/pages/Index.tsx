@@ -10,8 +10,8 @@ import InsightsDashboard from "@/components/InsightsDashboard";
 import InkSplatter from "@/components/InkSplatter";
 import BackgroundElements from "@/components/BackgroundElements";
 import { getEntry, saveEntry } from "@/lib/journal-store";
-import { analyzeEntry, generateQuestion } from "@/lib/analyze-entry";
 import { useAuth } from "@/lib/auth-context";
+import { supabase } from "@/integrations/supabase/client";
 
 const Index = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -57,42 +57,64 @@ const Index = () => {
     navigate("/login");
   };
 
-  const handleAskQuestion = useCallback(() => {
+  const handleAskQuestion = useCallback(async () => {
     if (!text.trim()) {
       toast.error("Write something first", { description: "The AI needs some ink to read." });
       return;
     }
     setIsAsking(true);
-    setTimeout(() => {
-      const q = generateQuestion(text);
-      setText((prev) => prev + `\n\n💭 ${q}`);
+    try {
+      const { data, error } = await supabase.functions.invoke("analyze-journal", {
+        body: { text, action: "question" },
+      });
+      if (error) throw error;
+      const question = data?.result || "What is your mind circling back to?";
+      setText((prev) => prev + `\n\n💭 ${question}`);
+      toast("A question to ponder", { description: question });
+    } catch (e) {
+      console.error(e);
+      toast.error("Failed to generate question", { description: "Please try again." });
+    } finally {
       setIsAsking(false);
-      toast("A question to ponder", { description: q });
-    }, 800);
+    }
   }, [text]);
 
-  const handleAnalyze = useCallback(() => {
+  const handleAnalyze = useCallback(async () => {
     if (!text.trim()) {
       toast.error("Nothing to analyze", { description: "Pour some thoughts onto the page first." });
       return;
     }
     setIsAnalyzing(true);
-    setTimeout(() => {
-      const result = analyzeEntry(text);
+    try {
+      const { data, error } = await supabase.functions.invoke("analyze-journal", {
+        body: { text, action: "analyze" },
+      });
+      if (error) throw error;
+
+      const resultText = data?.result || "";
+      // Parse JSON from AI response (may be wrapped in markdown code block)
+      const jsonMatch = resultText.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) throw new Error("Invalid AI response");
+      
+      const result = JSON.parse(jsonMatch[0]);
       setMood(result.moodText);
       setMoodScore(result.moodScore);
       setMoodLabel(result.moodLabel);
       setInsights(result.insights);
-      setTasks(result.tasks);
+      setTasks(result.tasks || []);
       saveEntry(currentDate, {
         text,
         mood: result.moodText,
         insights: result.insights,
-        tasks: result.tasks,
+        tasks: result.tasks || [],
       });
-      setIsAnalyzing(false);
       toast.success("Analysis complete", { description: "Your reflection is ready below." });
-    }, 1500);
+    } catch (e) {
+      console.error(e);
+      toast.error("Analysis failed", { description: "Please try again." });
+    } finally {
+      setIsAnalyzing(false);
+    }
   }, [text, currentDate]);
 
   return (
