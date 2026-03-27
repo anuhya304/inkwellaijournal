@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { addDays, subDays, isToday } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, Save, Loader2, PenLine, LogOut } from "lucide-react";
+import { Sparkles, Save, Loader2, PenLine, LogOut, CalendarDays } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import DateNavigator from "@/components/DateNavigator";
@@ -24,6 +24,7 @@ const Index = () => {
   const [tasks, setTasks] = useState<string[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isAsking, setIsAsking] = useState(false);
+  const [calendarOpen, setCalendarOpen] = useState(false);
   const { logout } = useAuth();
   const navigate = useNavigate();
 
@@ -194,9 +195,28 @@ const Index = () => {
             </AnimatePresence>
           </div>
 
-          {/* Calendar sidebar */}
+          {/* Calendar toggle + dropdown */}
           <div className="lg:w-[260px] flex-shrink-0 order-first lg:order-last">
-            <MoodCalendar currentDate={currentDate} onDateSelect={setCurrentDate} />
+            <button
+              onClick={() => setCalendarOpen((o) => !o)}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-card/80 backdrop-blur-sm border border-border text-foreground font-mono text-sm tracking-wide hover:bg-secondary/60 transition-all shadow-ink mb-2"
+            >
+              <CalendarDays className="w-4 h-4 text-primary" />
+              {calendarOpen ? "Hide Calendar" : "Show Calendar"}
+            </button>
+            <AnimatePresence>
+              {calendarOpen && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.3, ease: "easeInOut" }}
+                  className="overflow-hidden"
+                >
+                  <MoodCalendar currentDate={currentDate} onDateSelect={setCurrentDate} />
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
 
