@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import DateNavigator from "@/components/DateNavigator";
 import JournalEditor from "@/components/JournalEditor";
 import InsightsDashboard from "@/components/InsightsDashboard";
+import MoodCalendar from "@/components/MoodCalendar";
 import InkSplatter from "@/components/InkSplatter";
 import BackgroundElements from "@/components/BackgroundElements";
 import { getEntry, saveEntry } from "@/lib/journal-store";
@@ -126,7 +127,7 @@ const Index = () => {
 
       <BackgroundElements />
 
-      <div className="relative z-10 max-w-2xl mx-auto px-4 py-8 md:py-16">
+      <div className="relative z-10 max-w-6xl mx-auto px-4 py-8 md:py-16">
         <motion.header
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -151,43 +152,53 @@ const Index = () => {
           </p>
         </motion.header>
 
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }} className="mb-8">
-          <DateNavigator currentDate={currentDate} onPrevious={handlePrevious} onNext={handleNext} />
-        </motion.div>
+        <div className="flex flex-col lg:flex-row gap-8">
+          {/* Main journal area */}
+          <div className="flex-1 min-w-0">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }} className="mb-8">
+              <DateNavigator currentDate={currentDate} onPrevious={handlePrevious} onNext={handleNext} />
+            </motion.div>
 
-        <div className="mb-6">
-          <JournalEditor value={text} onChange={setText} onClear={handleClear} />
+            <div className="mb-6">
+              <JournalEditor value={text} onChange={setText} onClear={handleClear} />
+            </div>
+
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.4 }}
+              className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-10"
+            >
+              <button
+                onClick={handleAskQuestion}
+                disabled={isAsking || !text.trim()}
+                className="flex-1 flex items-center justify-center gap-2 px-5 py-3 rounded-lg bg-secondary text-secondary-foreground font-mono text-sm tracking-wide hover:bg-secondary/80 transition-all disabled:opacity-40 disabled:cursor-not-allowed border border-border"
+              >
+                {isAsking ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4 text-amber" />}
+                Ask a Question
+              </button>
+              <button
+                onClick={handleAnalyze}
+                disabled={isAnalyzing || !text.trim()}
+                className="flex-1 flex items-center justify-center gap-2 px-5 py-3 rounded-lg bg-primary text-primary-foreground font-mono text-sm tracking-wide hover:bg-amber-glow transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-amber"
+              >
+                {isAnalyzing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                Save & Analyze
+              </button>
+            </motion.div>
+
+            <AnimatePresence>
+              {(mood || insights || tasks.length > 0) && (
+                <InsightsDashboard mood={mood} moodScore={moodScore} moodLabel={moodLabel} insights={insights} tasks={tasks} />
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* Calendar sidebar */}
+          <div className="lg:w-[260px] flex-shrink-0 order-first lg:order-last">
+            <MoodCalendar currentDate={currentDate} onDateSelect={setCurrentDate} />
+          </div>
         </div>
-
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.4 }}
-          className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-10"
-        >
-          <button
-            onClick={handleAskQuestion}
-            disabled={isAsking || !text.trim()}
-            className="flex-1 flex items-center justify-center gap-2 px-5 py-3 rounded-lg bg-secondary text-secondary-foreground font-mono text-sm tracking-wide hover:bg-secondary/80 transition-all disabled:opacity-40 disabled:cursor-not-allowed border border-border"
-          >
-            {isAsking ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4 text-amber" />}
-            Ask a Question
-          </button>
-          <button
-            onClick={handleAnalyze}
-            disabled={isAnalyzing || !text.trim()}
-            className="flex-1 flex items-center justify-center gap-2 px-5 py-3 rounded-lg bg-primary text-primary-foreground font-mono text-sm tracking-wide hover:bg-amber-glow transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-amber"
-          >
-            {isAnalyzing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-            Save & Analyze
-          </button>
-        </motion.div>
-
-        <AnimatePresence>
-          {(mood || insights || tasks.length > 0) && (
-            <InsightsDashboard mood={mood} moodScore={moodScore} moodLabel={moodLabel} insights={insights} tasks={tasks} />
-          )}
-        </AnimatePresence>
 
         <motion.footer initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }} className="mt-16 text-center">
           <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent mb-4" />
